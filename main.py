@@ -1,6 +1,6 @@
 import asyncio, logging
 from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, filters
-from bot_handlers import handle_video, stats_cmd, upload_queue
+from bot_handlers import handle_video, stats_cmd, retry_queue, pending_queue
 from config import TELEGRAM_TOKEN, PORT, BASE_URL, ADMIN_CHAT_ID, QUEUE_FILE
 from utils import load_json, save_json
 
@@ -11,19 +11,19 @@ async def auto_retry_engine():
     global BOT_APP
     while True:
         await asyncio.sleep(600)
-        if not upload_queue: continue
-        item=upload_queue.pop(0)
+        if not retry_queue: continue
+        item = retry_queue.pop(0)
         try:
             # Retry upload
-            save_json(QUEUE_FILE, upload_queue)
+            save_json(QUEUE_FILE, retry_queue)
         except:
-            upload_queue.append(item)
-            save_json(QUEUE_FILE, upload_queue)
+            retry_queue.append(item)
+            save_json(QUEUE_FILE, retry_queue)
 
 async def on_startup(app):
     global BOT_APP, upload_queue
     BOT_APP=app
-    upload_queue.extend(load_json(QUEUE_FILE,[]))
+    retry_queue.extend(load_json(QUEUE_FILE, []))
     asyncio.create_task(auto_retry_engine())
     print("✅ Background engine started")
 
