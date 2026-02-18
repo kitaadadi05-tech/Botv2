@@ -2,10 +2,22 @@ import json, os, time, random
 from config import STATS_FILE, ANALYTICS_FILE, BANNED_WORDS
 
 # JSON safe load/save
-def load_json(path, default):
-    if os.path.exists(path):
-        with open(path,"r") as f: return json.load(f)
-    return default
+import json, os
+
+def load_json(path, default=None):
+    if default is None:
+        default = {}
+    if not os.path.exists(path):
+        return default
+    try:
+        with open(path, "r") as f:
+            content = f.read().strip()
+            if not content:
+                return default
+            return json.loads(content)
+    except json.JSONDecodeError:
+        # Jika JSON corrupt, reset ke default
+        return default
 
 def save_json(path, data):
     with open(path,"w") as f: json.dump(data,f)
